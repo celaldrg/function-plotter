@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Function Plotter</title>
+    <meta
+      name="description"
+      content="Plot y = f(x) in the browser: pan and zoom, trace curves, mark roots, extrema and intersections, shade integrals and share the plot as a link."
+    />
+    <meta name="theme-color" content="#0f172a" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Function Plotter" />
+    <meta
+      property="og:description"
+      content="Plot y = f(x) in the browser: derivatives, roots, extrema, intersections, integrals and a table of values. Free and open source."
+    />
+    <meta property="og:url" content="https://celaldrg.github.io/function-plotter/" />
+    <meta property="og:image" content="https://celaldrg.github.io/function-plotter/docs/screenshot.png" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Cpath d='M4 16h24M16 4v24' stroke='%23334155' stroke-width='2'/%3E%3Cpath d='M4 21c4 0 5-12 9-12s5 14 9 14c3 0 4-6 6-8' fill='none' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1 class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#1e293b" />
+          <path d="M4 16h24M16 4v24" stroke="#334155" stroke-width="2" />
+          <path d="M4 21c4 0 5-12 9-12s5 14 9 14c3 0 4-6 6-8" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <span data-i18n="title">Function Plotter</span>
+      </h1>
+      <div class="header-actions">
+        <button type="button" class="btn" id="share" data-icon="link" data-i18n-title="shareHint">
+          <span class="btn-label" data-i18n="share">Share</span>
+        </button>
+        <button type="button" class="btn" id="png" data-icon="download" data-i18n-title="pngHint">
+          <span class="btn-label" data-i18n="png">PNG</span>
+        </button>
+        <button type="button" class="btn" id="reset" data-icon="restart" data-i18n-title="resetHint">
+          <span class="btn-label" data-i18n="reset">Reset</span>
+        </button>
+        <button type="button" class="btn btn-lang" id="lang" data-i18n-label="switchLanguage" data-i18n-title="switchLanguage" aria-label="TR: switch to Turkish">
+          TR
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="plot">
+        <canvas id="plot" tabindex="0" role="img" data-i18n-label="plotLabel"></canvas>
+        <p class="plot-hint" id="hint" aria-hidden="true"></p>
+        <div class="zoom-controls" id="zoom-controls">
+          <button type="button" class="icon-btn" id="zoom-in" data-icon="plus" data-i18n-label="zoomIn" data-i18n-title="zoomIn"></button>
+          <button type="button" class="icon-btn" id="zoom-out" data-icon="minus" data-i18n-label="zoomOut" data-i18n-title="zoomOut"></button>
+          <button type="button" class="icon-btn" id="zoom-reset" data-icon="target" data-i18n-label="resetView" data-i18n-title="resetView"></button>
+        </div>
+      </div>
+
+      <aside class="panel" data-i18n-label="controls">
+        <section class="card" aria-labelledby="fn-title">
+          <div class="card-head">
+            <h2 id="fn-title" data-i18n="functions">Functions</h2>
+            <span class="count" id="fn-count"></span>
+            <button type="button" class="btn btn-small btn-accent" id="fn-add" data-icon="plus" data-i18n-title="addHint">
+              <span data-i18n="add">Add</span>
+            </button>
+          </div>
+          <ol class="fn-list" id="fn-list"></ol>
+        </section>
+
+        <section class="card" id="params-card" aria-labelledby="params-title" hidden>
+          <h2 id="params-title" data-i18n="parameters">Parameters</h2>
+          <div class="param-list" id="param-list"></div>
+        </section>
+
+        <section class="card" aria-labelledby="show-title">
+          <h2 id="show-title" data-i18n="show">Show</h2>
+          <div class="chips">
+            <button type="button" class="chip" data-toggle="derivative" aria-pressed="false" data-i18n="derivative">Derivative</button>
+            <button type="button" class="chip" data-toggle="roots" aria-pressed="false" data-i18n="roots">Roots</button>
+            <button type="button" class="chip" data-toggle="extrema" aria-pressed="false" data-i18n="extrema">Extrema</button>
+            <button type="button" class="chip" data-toggle="intersections" aria-pressed="false" data-i18n="intersections">
+              Intersections
+            </button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="int-title">
+          <div class="card-head">
+            <h2 id="int-title" data-i18n="integral">Integral</h2>
+            <label class="switch">
+              <input type="checkbox" id="int-on" role="switch" />
+              <span class="switch-track" aria-hidden="true"></span>
+              <span class="sr-only" data-i18n="shadeArea">Shade the area under a curve</span>
+            </label>
+          </div>
+          <div class="field-grid int-fields">
+            <label class="field">
+              <span data-i18n="integralFunction">Function</span>
+              <select id="int-fn"></select>
+            </label>
+            <label class="field">
+              <span data-i18n="from">From</span>
+              <input id="int-from" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" />
+            </label>
+            <label class="field">
+              <span data-i18n="to">To</span>
+              <input id="int-to" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" />
+            </label>
+          </div>
+          <p class="field-msg" id="int-msg" data-i18n="boundInvalid" hidden></p>
+          <p class="int-result" id="int-result" aria-live="polite"></p>
+        </section>
+
+        <details class="card" id="table-card">
+          <summary data-i18n="table">Table of values</summary>
+          <div class="field-grid">
+            <label class="field">
+              <span data-i18n="start">Start</span>
+              <input id="tbl-start" type="text" value="-5" spellcheck="false" autocomplete="off" autocapitalize="off" />
+            </label>
+            <label class="field">
+              <span data-i18n="step">Step</span>
+              <input id="tbl-step" type="text" value="1" spellcheck="false" autocomplete="off" autocapitalize="off" />
+            </label>
+          </div>
+          <p class="field-msg" id="tbl-msg" hidden></p>
+          <div class="table-scroll">
+            <table class="values">
+              <thead id="tbl-head"></thead>
+              <tbody id="tbl-body"></tbody>
+            </table>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary data-i18n="syntax">Syntax</summary>
+          <dl class="syntax">
+            <dt data-i18n="syntaxOperators">Operators</dt>
+            <dd data-i18n="syntaxOperatorsText"></dd>
+            <dt data-i18n="syntaxFunctions">Functions</dt>
+            <dd id="syntax-functions"></dd>
+            <dt data-i18n="syntaxConstants">Constants</dt>
+            <dd data-i18n="syntaxConstantsText"></dd>
+            <dt data-i18n="syntaxKeys">Keyboard</dt>
+            <dd data-i18n="syntaxKeysText"></dd>
+          </dl>
+        </details>
+      </aside>
+    </main>
+
+    <footer class="app-footer">
+      <a href="https://github.com/celaldrg/function-plotter" data-i18n="footer">MIT · Source on GitHub</a>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span id="toast-text"></span>
+      <button type="button" class="toast-action" id="toast-action" hidden></button>
+    </div>
+  </body>
+</html>

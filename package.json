@@ -1,0 +1,11 @@
+{
+  "name": "function-plotter",
+  "version": "1.0.0",
+  "description": "Graph y = f(x) in the browser: own parser, symbolic derivatives, roots, extrema, intersections and integrals. Vanilla JS, no dependencies.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
