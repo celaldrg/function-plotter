@@ -2,7 +2,7 @@
  * Symbolic differentiation: sum, product, quotient and chain rules, the power rule for
  * constant exponents and the general u^v through exp/ln. Results are simplified as they are built.
  */
-import { num, dependsOn } from './ast.js';
+import { num, isNum, equal, dependsOn } from './ast.js';
 import { simplify, add, sub, mul, div, pow, negate, apply } from './simplify.js';
 
 const ONE = num(1);
@@ -44,10 +44,20 @@ const BINARY_RULES = {
   mod: ([u, v], [du, dv]) => sub(du, mul(dv, fn('floor', div(u, v)))),
 };
 
+/**
+ * l / u where ln(u) already restricts the domain to u > 0, so u/u = 1 and (k*u)/u = k there.
+ * The plain div() keeps u/u, which is undefined at u = 0.
+ */
+function overLogArgument(l, u) {
+  if (equal(l, u)) return ONE;
+  if (l.type === 'bin' && l.op === '*' && isNum(l.left) && equal(l.right, u)) return l.left;
+  return div(l, u);
+}
+
 function diffPower(u, v, du, dv, name) {
   if (!dependsOn(v, name)) return mul(mul(v, pow(u, sub(v, ONE))), du);
   if (!dependsOn(u, name)) return mul(mul(pow(u, v), fn('ln', u)), dv);
-  return mul(pow(u, v), add(mul(dv, fn('ln', u)), div(mul(v, du), u)));
+  return mul(pow(u, v), add(mul(dv, fn('ln', u)), overLogArgument(mul(v, du), u)));
 }
 
 function diffQuotient(u, v, du, dv, name) {

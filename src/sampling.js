@@ -5,6 +5,8 @@
  */
 
 const MAX_JUMP_STEPS = 64;
+/** Irrational probe positions: a curve that repeats inside an interval cannot line up with both. */
+const PROBES = [(3 - Math.sqrt(5)) / 2, (Math.sqrt(5) - 1) / 2];
 
 function needsRefinement(y0, ym, y1, tolerance) {
   const finite = [y0, ym, y1].filter(Number.isFinite).length;
@@ -83,6 +85,13 @@ export function sampleFunction(f, xMin, xMax, options = {}) {
     if (Number.isFinite(y)) current.push({ x, y });
     else breakLine();
   };
+  // A wide interval can hold several teeth of a sawtooth (mod(10x, 1)) whose ends and midpoint
+  // all lie on one chord; two off-centre probes catch the teeth the midpoint test misses.
+  const offChord = (x0, y0, x1, y1) =>
+    PROBES.some((t) => {
+      const y = f(x0 + t * (x1 - x0));
+      return !Number.isFinite(y) || Math.abs(y - (y0 + t * (y1 - y0))) > tolerance;
+    });
   const jumps = (x0, y0, x1, y1) =>
     Number.isFinite(y0) && Number.isFinite(y1) && hasJump(f, x0, y0, x1, y1, tolerance);
   const refine = (x0, y0, x1, y1, depth) => {
@@ -95,7 +104,7 @@ export function sampleFunction(f, xMin, xMax, options = {}) {
     if (isOffscreen([y0, ym, y1], yMin, yMax)) return;
     // A midpoint on the chord can still hide a jump on each side of it: floor(10x) steps from 1
     // to 3 over [0.2, 0.3] with f(0.25) = 2. A chord is kept only when no jump hides under it.
-    if (!needsRefinement(y0, ym, y1, tolerance) && !jumps(x0, y0, x1, y1)) return;
+    if (!needsRefinement(y0, ym, y1, tolerance) && !offChord(x0, y0, x1, y1) && !jumps(x0, y0, x1, y1)) return;
     refine(x0, y0, xm, ym, depth + 1);
     emit(xm, ym);
     refine(xm, ym, x1, y1, depth + 1);

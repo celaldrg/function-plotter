@@ -99,6 +99,8 @@ test('derivative text is simplified', () => {
     'abs(x)': 'sign(x)',
     'floor(x)': '0',
     'exp(2x)': '2exp(2x)',
+    'x^x': 'x^x*(ln(x) + 1)',
+    'x^(2x)': 'x^(2x)*(2ln(x) + 2)',
   };
   for (const [input, expected] of Object.entries(cases)) {
     assert.equal(toText(derivative(parse(input))), expected, `d/dx ${input}`);

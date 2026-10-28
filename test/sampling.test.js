@@ -60,6 +60,34 @@ test('dense steps: no chord across jumps, even when the midpoint lies on it', ()
   }
 });
 
+test('sawtooth teeth: no chord spans a jump, even when one interval holds several teeth', () => {
+  // [expression, tooth index of x, tooth width at x, half-width of the window]. Zoomed out with the
+  // default 200 starting intervals, one interval can hold several teeth whose ends and midpoint all
+  // lie on one chord. Teeth narrower than 1.5 px (pixel = window / 1000) fill their band anyway.
+  const cases = [
+    ['mod(10x, 1)', (x) => Math.floor(10 * x), () => 0.1, 22.5],
+    ['mod(10x, 1)', (x) => Math.floor(10 * x), () => 0.1, 30],
+    ['tan(10x)', (x) => Math.round((10 * x) / Math.PI) + 0, () => Math.PI / 10, 76],
+    ['mod(3x, 2)', (x) => Math.floor((3 * x) / 2), () => 2 / 3, 110],
+    ['mod(x^2, 1)', (x) => Math.sign(x) * Math.floor(x * x) + 0, (x) => 1 / (2 * Math.abs(x)), 20.5],
+    ['mod(x^2, 1)', (x) => Math.sign(x) * Math.floor(x * x) + 0, (x) => 1 / (2 * Math.abs(x)), 40.6],
+  ];
+  for (const [text, tooth, width, half] of cases) {
+    const [yMin, yMax] = [-0.6 * half, 0.6 * half];
+    const pixel = (2 * half) / 1000;
+    for (const options of [{ yMin, yMax }, { yMin, yMax, ...samplingDetail(1000) }]) {
+      for (const segment of sampleFunction(fn(text), -half, half, options)) {
+        for (let i = 1; i < segment.length; i += 1) {
+          const [a, b] = [segment[i - 1], segment[i]];
+          const hidden = (a.y > yMax && b.y > yMax) || (a.y < yMin && b.y < yMin);
+          if (hidden || width((a.x + b.x) / 2) < 1.5 * pixel) continue;
+          assert.equal(tooth(a.x), tooth(b.x), `${text} over ±${half}: a chord spans a jump at x=${a.x}..${b.x}`);
+        }
+      }
+    }
+  }
+});
+
 test('smooth curves stay in one segment and follow the curve within the tolerance', () => {
   const f = fn('sin(3x) + x/4');
   const segments = sampleFunction(f, -10, 10, { tolerance: TOL });
